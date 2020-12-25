@@ -1,6 +1,7 @@
 package go.springboot.learnrestmicroservice.ui.controller;
 
 import go.springboot.learnrestmicroservice.ui.model.request.UserInfoRequestModel;
+import go.springboot.learnrestmicroservice.ui.model.request.UserInfoUpdateRequestModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -56,9 +57,23 @@ public class UserController {
         return new ResponseEntity<UserInfoRequestModel>(userInfoRequestModel, HttpStatus.OK);
     }
 
-    @PutMapping
-    public String updateUser() {
-        return "update user";
+    @PutMapping(consumes=MediaType.APPLICATION_JSON_VALUE
+            ,produces=MediaType.APPLICATION_JSON_VALUE
+            ,path = "/{userId}")
+    public ResponseEntity<UserInfoRequestModel> updateUser(
+            @PathVariable String userId,
+            @Valid @RequestBody UserInfoUpdateRequestModel userInfoUpdateRequestModel) {
+        if (tempUsers.containsKey(userId)) {
+            UserInfoRequestModel userInfoRequestModel = (UserInfoRequestModel)tempUsers.get(userId);
+            userInfoRequestModel.setFirstName(userInfoUpdateRequestModel.getFirstName());
+            userInfoRequestModel.setLastName(userInfoUpdateRequestModel.getLastName());
+            tempUsers.put(userId, userInfoRequestModel);
+
+            return new ResponseEntity<UserInfoRequestModel>(userInfoRequestModel, HttpStatus.OK);
+        }
+
+        // no user found ... no content
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @DeleteMapping
