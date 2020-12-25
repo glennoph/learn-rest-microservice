@@ -76,8 +76,12 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @DeleteMapping
-    public String deleteUser() {
-        return "delete user";
+    @DeleteMapping(path="/{id}")
+    public ResponseEntity deleteUser(@PathVariable String id) {
+        if (tempUsers != null && tempUsers.containsKey(id)) {
+            tempUsers.remove(id);
+            return new ResponseEntity(HttpStatus.NO_CONTENT);
+        }
+        return new ResponseEntity(HttpStatus.NOT_FOUND);
     }
 }
