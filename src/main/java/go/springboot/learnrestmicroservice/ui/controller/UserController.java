@@ -1,8 +1,10 @@
 package go.springboot.learnrestmicroservice.ui.controller;
 
+import go.springboot.learnrestmicroservice.service.UserService;
 import go.springboot.learnrestmicroservice.ui.model.request.UserInfoRequestModel;
 import go.springboot.learnrestmicroservice.ui.model.request.UserInfoUpdateRequestModel;
 import go.springboot.learnrestmicroservice.ui.model.response.UserRest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +18,8 @@ import java.util.Map;
 @RequestMapping("users")
 public class UserController {
 
-    Map<String, UserRest> tempUsers;
+    @Autowired
+    UserService userService;
 
     /** get all users
      *
@@ -42,9 +45,8 @@ public class UserController {
             return new ResponseEntity(HttpStatus.BAD_REQUEST);
 
         // find user and return user info with status OK
-        UserRest userRest=null;
-        if (tempUsers !=null && tempUsers.containsKey(userId)) {
-            userRest = tempUsers.get(userId);
+        UserRest userRest=userService.getUser(userId);
+        if (userRest !=null ) {
             return new ResponseEntity<UserRest>(userRest, HttpStatus.OK);
         }
         // no user was found
@@ -61,15 +63,8 @@ public class UserController {
     )
     public ResponseEntity<UserRest> createUser(@Valid @RequestBody UserInfoRequestModel userDetails) {
 
-        UserRest userRest = new UserRest();
-        userRest.setFirstName(userDetails.getFirstName());
-        userRest.setLastName(userDetails.getLastName());
-        userRest.setEmail(userDetails.getEmail());
-        userRest.setUserId(userDetails.getUserId());
-
-        // save user in temp users
-        if (tempUsers == null) tempUsers = new HashMap<>();
-        tempUsers.put(userDetails.getUserId(), userRest);
+        UserRest userRest = null;
+        userRest = userService.createUser(userDetails);
 
         return new ResponseEntity<UserRest>(userRest, HttpStatus.OK);
     }
@@ -86,12 +81,9 @@ public class UserController {
     public ResponseEntity<UserRest> updateUser(
             @PathVariable String userId,
             @Valid @RequestBody UserInfoUpdateRequestModel userInfoUpdateRequestModel) {
-        if (tempUsers.containsKey(userId)) {
-            UserRest userRest = (UserRest)tempUsers.get(userId);
-            userRest.setFirstName(userInfoUpdateRequestModel.getFirstName());
-            userRest.setLastName(userInfoUpdateRequestModel.getLastName());
-            tempUsers.put(userId, userRest);
+        UserRest userRest = userService.updateUser(userId, userInfoUpdateRequestModel);
 
+        if (userRest != null) {
             return new ResponseEntity<UserRest>(userRest, HttpStatus.OK);
         }
 
@@ -106,9 +98,7 @@ public class UserController {
      */
     @DeleteMapping(path="/{id}")
     public ResponseEntity deleteUser(@PathVariable String id) {
-        if (tempUsers != null &&
-                tempUsers.containsKey(id)) {
-            tempUsers.remove(id);
+        if (userService.deleteUser(id)) {
             return new ResponseEntity(HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity(HttpStatus.NOT_FOUND);
